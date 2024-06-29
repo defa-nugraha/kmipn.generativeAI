@@ -21,3 +21,14 @@ async def prediction(request: PredictionRequest):
     
     result = Prediction.predict(prompt)
     return {"status": 200, "data": {'hoax': result}}
+
+class PredictionScrappingRequest(BaseModel):
+    url: str
+    id_url: str
+    
+@app.post("/prediction/scraping")
+async def prediction(request: PredictionScrappingRequest):
+    prompt = request
+    
+    # result = Prediction.predict(prompt)
+    return {"status": "success", "code": 200}

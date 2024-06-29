@@ -13,7 +13,7 @@ pip install google-cloud-aiplatform
 uvicorn main:app --reload
 ```
 
-### DOUMENTATION
+### DOCUMENTATION
 
 ```
 base_url/docs

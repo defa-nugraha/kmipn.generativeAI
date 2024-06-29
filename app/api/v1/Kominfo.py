@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import requests
 import pandas as pd
 
-class Liputan6:
+class Kominfo:
     def __init__(self, url):
         self.url = url
 
@@ -12,23 +12,32 @@ class Liputan6:
         news_data = {
             "title": "",
             "description": "",
-            "author": "",
-            "source": "liputan6",
+            "author": "kominfo",
+            "source": "kominfo",
             "publish_date": "",
             "url": self.url
         }
-            
+
         res = requests.get(self.url)
-        soup = BeautifulSoup(res.content, "html.parser")
+        soup = BeautifulSoup(res.text, "html.parser")
 
-        title = soup.find("h1", {"class": "read-page--header--title entry-title"})
-        author = soup.find('span', {"class": "read-page--header--author__name fn"})
-        date = soup.find("time", {"class": "read-page--header--author__datetime"})
-        data = soup.find(
-            "div", {"class": "article-content-body__item-content"}
-        )
+        title = soup.find("h1", {"class": "title"})
+        date = soup.find("div", {"class": "date"})
+        data = soup.find("div", {"class": "youtube-container"})
 
-        if title and date and data:
+        missing_elements = []
+        
+        if not title:
+            missing_elements.append("title")
+        if not date:
+            missing_elements.append("date")
+        if not data:
+            missing_elements.append("data")
+
+        if missing_elements:
+            print(f"Some elements were not found for URL: {self.url}")
+            print(f"Missing elements: {', '.join(missing_elements)}")
+        else:
             cleaned_text = Helpers.clean_text(str(data))
             all_data.append(
                 {
@@ -37,15 +46,10 @@ class Liputan6:
                     "text": Helpers.clean_article_content(cleaned_text),
                 }
             )
-                
+
             news_data["title"] = title.text.strip()
-            news_data["author"] = author.text.strip()
             news_data["publish_date"] = Helpers.convert_to_datetime(date.text.strip())
             news_data["description"] = Helpers.clean_article_content(cleaned_text)
-            news_data["data"] = pd.DataFrame(all_data)
-            print(news_data["publish_date"])
-        else:
-            print(f"Some elements were not found for URL: {self.url}")
-
+            print(news_data)
 
         return news_data

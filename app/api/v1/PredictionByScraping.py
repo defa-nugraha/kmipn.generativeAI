@@ -1,12 +1,12 @@
 from datetime import datetime
 from helpers.Helpers import Helpers
 from api.v1.Liputan6 import Liputan6
+from api.v1.Kominfo import Kominfo
 import os
 import vertexai
 from vertexai.language_models import TextGenerationModel
 import json
 import requests
-import time
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "storage/durable-boulder-407913-0a0904bf432a.json"
 
@@ -18,42 +18,46 @@ class PredictionByScraping:
         if source == "liputan6.com":
             liputan6 = Liputan6(url)
             dataScraping = liputan6.get_data()
-            data = {
-                "title": dataScraping["title"],
-                "description": dataScraping["description"],
-                "url": dataScraping["url"],
-                "source": dataScraping["source"],
-                "publish_date": dataScraping["publish_date"],
-            }
-            predict = PredictionByScraping.predict(data)
-        
-            cleaned_data_string = predict.strip().strip('`').strip()
-
-            # Mengubah string JSON menjadi dictionary
-            data_dict = json.loads(cleaned_data_string)
-            
-            # update ke database
-            url_post = 'https://be-hoax-chaser.dzikrifaza.my.id/news/createOrUpdate'
-            now = datetime.now()
-            current_time = datetime.now().isoformat()
-            data = {
-                "id": id_url,
-                "description": dataScraping['description'],
-                "author": dataScraping['author'],
-                "source": dataScraping['source'],
-                "publish_date": dataScraping['publish_date'],
-                "news_keywords": ", ".join(data_dict['news_keywords']),
-                "is_training": True,
-                "training_date": current_time,
-                # "training_date": "2024-01-01 00:00:00",
-                "label": data_dict['label'],
-                # "location": ""
-            }
-            response = PredictionByScraping.post_news_data(url_post, json.dumps(data, default = str))
-            print(response)
+        elif source == "kominfo.go.id":
+            kominfo = Kominfo(url)
+            dataScraping = kominfo.get_data()
         else:
-            data_dict = "source not found"        
-        return data_dict
+            return "source not found" 
+        
+        data = {
+            "title": dataScraping["title"],
+            "description": dataScraping["description"],
+            "url": dataScraping["url"],
+            "source": dataScraping["source"],
+            "publish_date": dataScraping["publish_date"],
+        }
+        predict = PredictionByScraping.predict(data)
+        
+        cleaned_data_string = predict.strip().strip('`').strip()
+
+        # Mengubah string JSON menjadi dictionary
+        data_dict = json.loads(cleaned_data_string)    
+        
+        # update ke database
+        url_post = 'https://sxzh8vmg-4005.asse.devtunnels.ms/news/updateWithUrlRequest'
+        current_time = datetime.now().isoformat()
+        publish_date = str(dataScraping['publish_date'])
+        data = {
+            "urlRequestId": id_url,
+            "title": dataScraping['title'],
+            "description": dataScraping['description'],
+            "author": dataScraping['author'],
+            "source": dataScraping['source'],
+            "newsKeywords": ", ".join(data_dict['news_keywords']),
+            "isTraining": 1,
+            "trainingDate": current_time,
+            "publishDate": publish_date,
+            "label": data_dict['label'],
+            # "location": ""
+        }
+        response = PredictionByScraping.post_news_data(url_post, json.dumps(data))
+        # print(data)            
+        return response
     
     @classmethod
     def predict(cls, data):
@@ -94,13 +98,14 @@ class PredictionByScraping:
     def post_news_data(cls, url, data):
         headers = {
             'Content-Type': 'application/json',
-            'Accept': 'application/json'
         }
 
         try:
-            response = requests.post(url, json=data, headers=headers)
-            response.raise_for_status()  # Raises an error for bad responses (4xx or 5xx)
-            return response.json()
+            # response = requests.post(url, json=data, headers=headers)
+            response = requests.request("POST", url, headers=headers, data=data)
+            # print(response.text)
+            response.raise_for_status() 
+            return response.json() 
         except requests.exceptions.RequestException as e:
             print(f"Error posting data: {e}")
             return None

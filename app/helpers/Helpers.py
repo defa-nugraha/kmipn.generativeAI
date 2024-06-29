@@ -55,10 +55,10 @@ class Helpers:
         return date_obj
     
     def find_domain_in_url(cari):
-        data = ['liputan6.com', 'kompas.com', 'news.detik.com', 'cnnindonesia.com', 'cbncindonesia.com']
-    # Loop melalui setiap item dalam list 'data'
+        data = ['liputan6.com', 'kompas.com', 'news.detik.com', 'cnnindonesia.com', 'cbncindonesia.com', 'kominfo.go.id']
+        # Loop melalui setiap item dalam list 'data'
         for domain in data:
             # Periksa apakah domain ada dalam URL 'cari'
             if domain in cari:
                 return domain
-        return False
+        return "source not found"

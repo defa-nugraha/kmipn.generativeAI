@@ -1,18 +1,25 @@
-import os
-from Liputan6 import Liputan6
+import requests
+import json
 
-def main():
-    urls = [
-        "https://www.liputan6.com/news/read/5628123/kpk-tetapkan-tersangka-proyek-pengadaan-truk-basarnas-ini-sosoknya",
-        # "https://www.liputan6.com/islami/read/5626936/benarkah-bidah-jika-berkunjung-ke-orang-yang-pulang-haji-buya-yahya-ungkap-fadhilahnya?page=2"
-    ]
+url = "https://sxzh8vmg-4005.asse.devtunnels.ms/news/updateWithUrlRequest"
 
-    new_data, title, date, data = Liputan6(urls).get_data()
-    if os.path.exists("berita.csv"):
-        new_data.to_csv("berita.csv", mode="a", header=False, index=False)
-    else:
-        new_data.to_csv("berita.csv", index=False)
-    # print(title)
-    print(date)
-    # print(data)
-main()
+payload = json.dumps({
+  "urlRequestId": "a47fa774-f72c-437b-b8a5-82845c20c82a",
+  "title": "Ganti News Title",
+  "description": "Ganti Deskripsi",
+  "author": "Dzikri Faza",
+  "source": "Narasi",
+  "publishDate": "2023-11-28 19:30:43.934129",
+  "newsKeywords": "Mengajukan, Klimis",
+  "isTraining": True,
+  "trainingDate": "2023-11-28 19:30:43.934129",
+  "label": "NOT TRAINED",
+  "location": "Bandung"
+})
+headers = {
+  'Content-Type': 'application/json',
+  }
+
+response = requests.request("POST", url, headers=headers, data=payload)
+
+print(response.text)

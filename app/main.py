@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from api.v1.Prediction import Prediction
+from api.v1.PredictionByScraping import PredictionByScraping
 
 app = FastAPI()
 
@@ -29,6 +30,8 @@ class PredictionScrappingRequest(BaseModel):
 @app.post("/prediction/scraping")
 async def prediction(request: PredictionScrappingRequest):
     prompt = request
-    
-    # result = Prediction.predict(prompt)
-    return {"status": "success", "code": 200}
+    # result = prompt.url
+    result = PredictionByScraping.scrapingAndPredict(prompt.url, prompt.id_url)
+    if result == "source not found":
+        return {"status": "failed", "code": 404, "message": "source not found"}
+    return {"status": "success", "code": 200, "data": result}

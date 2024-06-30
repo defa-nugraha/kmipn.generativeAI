@@ -42,7 +42,7 @@ class PredictionByScraping:
         url_post = 'https://sxzh8vmg-4005.asse.devtunnels.ms/news/updateWithUrlRequest'
         current_time = datetime.now().isoformat()
         publish_date = str(dataScraping['publish_date'])
-        data = {
+        dataPost = {
             "urlRequestId": id_url,
             "title": dataScraping['title'],
             "description": dataScraping['description'],
@@ -53,9 +53,10 @@ class PredictionByScraping:
             "trainingDate": current_time,
             "publishDate": publish_date,
             "label": data_dict['label'],
+            "url": url,
             # "location": ""
         }
-        response = PredictionByScraping.post_news_data(url_post, json.dumps(data))
+        response = PredictionByScraping.post_news_data(url_post, json.dumps(dataPost))
         # print(data)            
         return response
     
@@ -105,6 +106,7 @@ class PredictionByScraping:
             response = requests.request("POST", url, headers=headers, data=data)
             # print(response.text)
             response.raise_for_status() 
+            print(response.text)
             return response.json() 
         except requests.exceptions.RequestException as e:
             print(f"Error posting data: {e}")

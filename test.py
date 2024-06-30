@@ -4,7 +4,7 @@ import json
 url = "https://sxzh8vmg-4005.asse.devtunnels.ms/news/updateWithUrlRequest"
 
 payload = json.dumps({
-  "urlRequestId": "a47fa774-f72c-437b-b8a5-82845c20c82a",
+  "urlRequestId": "4bbb537b-a717-47da-9aef-c8865174de8d",
   "title": "Ganti News Title",
   "description": "Ganti Deskripsi",
   "author": "Dzikri Faza",

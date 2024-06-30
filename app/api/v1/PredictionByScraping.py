@@ -40,7 +40,7 @@ class PredictionByScraping:
         data_dict = json.loads(cleaned_data_string)    
         
         # update ke database
-        url_post = 'https://sxzh8vmg-4005.asse.devtunnels.ms/news/updateWithUrlRequest'
+        url_post = 'https://be-hoax-chaser.dzikrifaza.my.id/news/updateWithUrlRequest'
         current_time = datetime.now().isoformat()
         publish_date = str(dataScraping['publish_date'])
         dataPost = {

@@ -1,6 +1,7 @@
 import html2text
 import re
 from datetime import datetime
+from urllib.parse import urlparse
 
 class Helpers:
     def clean_text(text):
@@ -62,3 +63,21 @@ class Helpers:
             if domain in cari:
                 return domain
         return "source not found"
+    
+    def get_domain_name(url):
+        # Mem-parse URL untuk mendapatkan komponen-komponen individual
+        parsed_url = urlparse(url)
+        
+        # Mendapatkan hostname dari URL
+        hostname = parsed_url.hostname
+        
+        # Memisahkan hostname menjadi bagian-bagian dan menghilangkan subdomain
+        domain_parts = hostname.split('.')
+        
+        # Memastikan domain minimal memiliki 2 bagian (misalnya, 'example.com')
+        if len(domain_parts) > 2:
+            domain_name = domain_parts[-2]
+        else:
+            domain_name = domain_parts[0]
+        
+        return domain_name

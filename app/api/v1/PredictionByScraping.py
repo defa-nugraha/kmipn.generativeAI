@@ -1,7 +1,8 @@
 from datetime import datetime
 from helpers.Helpers import Helpers
-from api.v1.Liputan6 import Liputan6
-from api.v1.Kominfo import Kominfo
+from api.v1.scraping.Liputan6 import Liputan6
+from api.v1.scraping.Kominfo import Kominfo
+from api.v1.GetDetailNewsByGenAI import GetDetailNewsByGenAI
 import os
 import vertexai
 from vertexai.language_models import TextGenerationModel
@@ -22,7 +23,7 @@ class PredictionByScraping:
             kominfo = Kominfo(url)
             dataScraping = kominfo.get_data()
         else:
-            return "source not found" 
+            return GetDetailNewsByGenAI.scrape_dynamic(url, id_url)
         
         data = {
             "title": dataScraping["title"],

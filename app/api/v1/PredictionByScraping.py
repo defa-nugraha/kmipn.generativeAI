@@ -37,7 +37,7 @@ class PredictionByScraping:
         cleaned_data_string = predict.strip().strip('`').strip()
 
         # Mengubah string JSON menjadi dictionary
-        data_dict = json.loads(cleaned_data_string)    
+        data_dict = json.loads(Helpers.fix_json_format(cleaned_data_string))    
         
         # update ke database
         url_post = 'https://be-hoax-chaser.dzikrifaza.my.id/news/updateWithUrlRequest'
@@ -55,8 +55,10 @@ class PredictionByScraping:
             "publishDate": publish_date,
             "label": data_dict['label'],
             "url": url,
+            "ambigousKeywords": data_dict['ambigousKeywords']
             # "location": ""
         }
+        print(f'datapost: {dataPost}')
         response = PredictionByScraping.post_news_data(url_post, json.dumps(dataPost))
         # print(data)            
         return response
@@ -76,6 +78,7 @@ class PredictionByScraping:
             [
                 label: tentukan berita ini sebagai hoax atau actual,
                 news_keywords: berikan beberapa keyword yang relevan untuk berita ini,
+                ambigousKeywords: berikan kata-kata ambigu yang terdapat pada berita ini jika tidak ada kirim tidak ada,
             ]
             .
         """

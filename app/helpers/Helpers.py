@@ -81,3 +81,22 @@ class Helpers:
             domain_name = domain_parts[0]
         
         return domain_name
+    
+    def fix_json_format(json_str):
+        print('fix json format: ')
+        # Hapus ``` atau ```json di awal dan akhir jika ada
+        if json_str.startswith('```') or json_str.startswith('```json'):
+            json_str = json_str[len('```json'):]
+        if json_str.endswith('```'):
+            json_str = json_str[:-3]
+        
+        # Hapus spasi kosong ekstra di awal dan akhir
+        json_str = json_str.strip()
+        
+        # Pastikan string JSON dimulai dengan { atau [ dan diakhiri dengan } atau ]
+        if not json_str.startswith('{') and not json_str.startswith('['):
+            json_str = '{' + json_str
+        if not json_str.endswith('}') and not json_str.endswith(']'):
+            json_str = json_str + '}'
+        
+        return json_str

@@ -64,9 +64,14 @@ class GetDetailNewsByGenAI:
 
         # Mengubah string JSON menjadi dictionary
         data_dict = json.loads(cleaned_data_string)
-        data_dict['source'] =  Helpers.get_domain_name(url)
+        try:
+            data_dict[0]['source'] =  Helpers.get_domain_name(url)
         
-        req = GetDetailNewsByGenAI.post_news_data(url, id_url, data_dict)
+            req = GetDetailNewsByGenAI.post_news_data(url, id_url, data_dict[0])
+        except Exception as e:
+            data_dict['source'] =  Helpers.get_domain_name(url)
+        
+            req = GetDetailNewsByGenAI.post_news_data(url, id_url, data_dict)
         print(type(data_dict))
         return req
     
@@ -86,7 +91,8 @@ class GetDetailNewsByGenAI:
                 publish_date: berikan tanggal publikasi berita sesuai dari scraping di atas dan format yyyy-mm-dd,
                 title: berikan judul berita sesuai dari scraping di atas,
                 description: berikan deskripsi berita sesuai dari scraping di atas,
-                author: berikan penulis berita sesuai dari scraping di atas
+                author: berikan penulis berita sesuai dari scraping di atas,
+                ambigousKeywords: berikan kata-kata ambigu yang terdapat pada berita ini jika tidak ada kirim tidak ada
             ]
             .
         """
@@ -130,6 +136,7 @@ class GetDetailNewsByGenAI:
                 "publishDate": publish_date,
                 "label": body.get('label', 'tidak ada'),
                 "url": url,
+                "ambigousKeywords": body.get('ambigousKeywords', 'tidak ada')
                 # "location": ""
             }
             

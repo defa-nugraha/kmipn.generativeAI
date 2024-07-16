@@ -16,7 +16,7 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "storage/durable-boulder-407913-0
 
 class PredictionByVideo:
     @classmethod
-    def analysisVideo(cls, url, userId):
+    def analysisVideo(cls, url, userId, retry_count=0, max_retries=3):
         # Initialize Vertex AI
         vertexai.init(project="durable-boulder-407913", location="asia-southeast1")
 
@@ -56,39 +56,25 @@ class PredictionByVideo:
 
         # Define the function to ask questions
         question = """
-            Pertanyaan: Saya ingin Anda menentukan apakah text berikut adalah hoax atau bukan:
-
-            Berdasarkan informasi di atas, tolong tentukan apakah hoax atau bukan. Jawablah dengan ketentuan sebagai berikut:
+            Berdasarkan informasi di atas, tentukan apakah hoax atau bukan. Jawablah dengan ketentuan sebagai berikut:
             [
                 label: tentukan text ini sebagai hoax atau actual,
                 news_keywords: berikan beberapa keyword yang relevan untuk text ini,
                 publish_date: berikan tanggal publikasi text sesuai dari informasi di atas dan format yyyy-mm-dd,
                 title: berikan judul text sesuai dari informasi di atas,
-                description: berikan deskripsi text sesuai dari informasi di atas,
+                description: berikan rangkuman mengenai topik text sesuai dari informasi di atas,
                 author: berikan penulis text sesuai dari informasi di atas,
                 ambigousKeywords: berikan kata-kata ambigu yang terdapat pada text ini jika tidak ada kirim tidak ada
             ]
-            
-            Contoh Jawaban yang Benar:
-
-            {
-                "label": "actual",
-                "news_keywords": ["coding", "job", "no cs degree", "no bootcamp"],
-                "publish_date": "2023-06-13",
-                "title": "How I Learned to Code in 4 Months & Got a Job! (No CS Degree, No Bootcamp)",
-                "description": "In this video, Tim Kim shares his journey of learning to code in 4 months and landing a job as a software developer without a CS degree or a bootcamp. He talks about the resources he used, the challenges he faced, and the strategies he employed to succeed.",
-                "author": "Tim Kim",
-                "ambigousKeywords": "tidak ada"
-            }
             
             Catatan: Pastikan jawaban dimulai dengan { dan diakhiri dengan }. Pastikan tidak ada karakter ```json dan ``` di awal atau di akhir string JSON.
         """
         
         video_subset = qa({"query": question})
         context = video_subset['source_documents']
-        
-        prompt = f"""json
-        Jawablah pertanyaan berikut ini secara terperinci, dengan menggunakan informasi dari teks di bawah ini. Jika jawabannya tidak ada di dalam teks, katakanlah saya tidak tahu dan jangan membuat jawaban Anda sendiri.
+        print("context: ", context)
+        prompt = f"""
+        Saya ingin Anda menentukan apakah text berikut adalah hoax atau bukan.
         
         Text:
         {context}
@@ -96,20 +82,27 @@ class PredictionByVideo:
         {question}
         """
         parameters = {
-            "temperature": 0.1,
+            "temperature": 0,
             "max_output_tokens": 256,
             "top_p": 0.8,
             "top_k": 40,
         }
-        print("Kirim ke url request")
+        
         response = llm.predict(prompt, **parameters)
         print("response: ", response)
         try:
-            data_dict = json.loads(Helpers.fix_json_format(response))
-            PredictionByVideo.post_request_url(url, userId)
-        except:
-            # lakukan predict ulang
-            PredictionByVideo.analysisVideo(url, userId)
+            fix_json_format = Helpers.fix_json_format(response)
+            data_dict = json.loads(fix_json_format)
+            urlRequestId = PredictionByVideo.post_request_url(url, userId)
+            data_dict['urlRequestId'] = urlRequestId
+        except json.JSONDecodeError as e:
+            print("JSON decode error: ", e)
+            if retry_count < max_retries:
+                print("Retrying analysisVideo... attempt", retry_count + 1)
+                return cls.analysisVideo(url, userId, retry_count + 1, max_retries)
+            else:
+                print("Max retries reached. Could not decode JSON.")
+                return None
             
         print(type(data_dict))
         try:
@@ -122,7 +115,7 @@ class PredictionByVideo:
             print(2)
             req = PredictionByVideo.post_news_data(url, data_dict)
             
-        print("type dtaa: ", type(data_dict[0]))
+        print("type data: ", type(data_dict[0]))
         return req
     
     
@@ -137,7 +130,7 @@ class PredictionByVideo:
             publish_date = str(body.get('publish_date', 'tidak ada'))
             
             dataPost = {
-                # "urlRequestId": "680030b2-1b5a-4aba-8086-4c86ec66b3bb",
+                "urlRequestId": body.get('urlRequestId', 'tidak ada'),
                 "title": body.get('title', 'tidak ada'),
                 "description": body.get('description', 'tidak ada'),
                 "author": body.get('author', 'tidak ada'),
@@ -181,8 +174,8 @@ class PredictionByVideo:
             response = requests.post(url_post, headers=headers, data=json.dumps(dataPost))
             response.raise_for_status() 
             print(response.text)
-            return response.json() 
+            t = response.json() 
+            return t["data"]["id"]
         except Exception as e:
             print(e)
             return e
-    

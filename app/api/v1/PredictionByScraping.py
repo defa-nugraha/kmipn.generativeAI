@@ -37,7 +37,7 @@ class PredictionByScraping:
         cleaned_data_string = predict.strip().strip('`').strip()
 
         # Mengubah string JSON menjadi dictionary
-        data_dict = json.loads(Helpers.fix_json_format(cleaned_data_string))    
+        data_dict = json.loads(cleaned_data_string)    
         
         # update ke database
         url_post = 'https://be-hoax-chaser.dzikrifaza.my.id/news/updateWithUrlRequest'

@@ -16,7 +16,7 @@ class Botama:
             "top_k": 40
         }
         model = TextGenerationModel.from_pretrained("text-bison")
-        text = "Nama kamu dalah Botama, kamu adalah asisten untuk membantu dalam percakapan pengguna mengenai pengetahuan berita hoax maupun aktual."
+        text = "Nama kamu dalah Bot Chaser, kamu adalah asisten untuk membantu dalam percakapan pengguna mengenai pengetahuan berita hoax maupun aktual."
         prompt = text + prompt
         response = model.predict(
             prompt,

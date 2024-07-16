@@ -83,12 +83,11 @@ class Helpers:
         return domain_name
     
     def fix_json_format(json_str):
-        print('fix json format: ')
         # Hapus ``` atau ```json di awal dan akhir jika ada
         if json_str.startswith('```') or json_str.startswith('```json'):
-            json_str = json_str[len('```json'):]
+            json_str = json_str.lstrip('```json').strip()
         if json_str.endswith('```'):
-            json_str = json_str[:-3]
+            json_str = json_str.rstrip('```').strip()
         
         # Hapus spasi kosong ekstra di awal dan akhir
         json_str = json_str.strip()

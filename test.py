@@ -1,91 +1,42 @@
-import vertexai
-import os
-from langchain.document_loaders import YoutubeLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import Chroma
-from langchain.chains import RetrievalQA
-from langchain.llms import VertexAI
-from langchain.embeddings import VertexAIEmbeddings
-
-# Set environment variable for Google Cloud credentials
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "app/storage/durable-boulder-407913-0a0904bf432a.json"
-
-# Initialize Vertex AI
-vertexai.init(project="durable-boulder-407913", location="asia-southeast1")
-
-# Configure the LLM
-llm = VertexAI(
-    model_name="text-bison@001",
-    max_output_tokens=256,
-    temperature=0.1,
-    top_p=0.8,
-    top_k=40,
-    verbose=True,
-)
-
-# Configure the embeddings
-EMBEDDING_QPM = 100
-EMBEDDING_NUM_BATCH = 5
-embeddings = VertexAIEmbeddings(
-    requests_per_minute=EMBEDDING_QPM,
-    num_instances_per_batch=EMBEDDING_NUM_BATCH,
-)
-
-# Load and process the YouTube video
-loader = YoutubeLoader.from_youtube_url("https://www.youtube.com/watch?v=WR1ydijTx5E&pp=ygUGY29kaW5n", add_video_info=True)
-result = loader.load()
-
-# Split the text into smaller chunks
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=0)
-docs = text_splitter.split_documents(result)
-print(f"# of documents = {len(docs)}")
-
-# Create a Chroma vector store and retriever
-db = Chroma.from_documents(docs, embeddings)
-retriever = db.as_retriever(search_type="similarity", search_kwargs={"k": 2})
-
-# Create a RetrievalQA chain
-qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever, return_source_documents=True)
-
-# Define the function to ask questions
-def sm_ask(question, print_results=True):
-    video_subset = qa({"query": question})
-    context = video_subset['source_documents']
+def fix_json_format(json_str):
+    # Hapus ``` atau ```json di awal dan akhir jika ada
+    if json_str.startswith('```') or json_str.startswith('```json'):
+        json_str = json_str.lstrip('```json').strip()
+    if json_str.endswith('```'):
+        json_str = json_str.rstrip('```').strip()
     
-    prompt = f"""
-    Answer the following question in a detailed manner, using information from the text below. If the answer is not in the text, say I don't know and do not generate your own response.
+    # Hapus spasi kosong ekstra di awal dan akhir
+    json_str = json_str.strip()
+    
+    # Pastikan string JSON dimulai dengan { atau [ dan diakhiri dengan } atau ]
+    if not json_str.startswith('{') and not json_str.startswith('['):
+        json_str = '{' + json_str
+    if not json_str.endswith('}') and not json_str.endswith(']'):
+        json_str = json_str + '}'
+    
+    return json_str
 
-    Question:
-    {question}
-    Text:
-    {context}
+# Contoh penggunaan:
+json_response = '''```
+{
+"label": "actual",
+"news_keywords": ["Biden", "Democratic Party", "election", "family", "humiliated", "performance"],
+"publish_date": "2024-07-01",
+"title": "President Biden is feeling ‘humiliated’ after debate performance",
+"description": "President Biden is feeling ‘humiliated’ after debate performance",
+"author": "Meet The Press NOW | NBC News NOW",
+"ambigousKeywords": "tidak ada"
+}
+```
+'''
 
-    Question:
-    {question}
+fixed_json = fix_json_format(json_response)
+print(fixed_json)
 
-    Answer:
-    """
-    parameters = {
-        "temperature": 0.1,
-        "max_output_tokens": 256,
-        "top_p": 0.8,
-        "top_k": 40
-    }
-    response = llm.predict(prompt, **parameters)
-    return {
-        "answer": response
-    }
-
-# Function to get response from the model
-def get_response(input_text):
-    response = sm_ask(input_text)
-    return response
-
-# Main loop to ask questions from the terminal
-if __name__ == "__main__":
-    while True:
-        input_text = input("Enter your question (or 'exit' to quit): ")
-        if input_text.lower() == 'exit':
-            break
-        response = get_response(input_text)
-        print(f"Answer: {response['answer']}\n")
+# Coba parsing dengan json.loads untuk memastikan format sudah benar
+import json
+try:
+    data_dict = json.loads(fixed_json)
+    print(data_dict)
+except json.JSONDecodeError as e:
+    print(f"Error parsing JSON: {e}")
